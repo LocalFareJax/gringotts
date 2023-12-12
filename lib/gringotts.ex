@@ -224,8 +224,7 @@ defmodule Gringotts do
       Gringotts.purchase(Gringotts.Gateways.XYZ, amount, card, opts)
   """
   def purchase(gateway, amount, card, opts \\ []) do
-    config = get_and_validate_config(gateway)
-    gateway.purchase(amount, card, [{:config, config} | opts])
+    gateway.purchase(amount, card, [{:config, opts[:config]} | opts])
   end
 
   @doc """
@@ -270,8 +269,7 @@ defmodule Gringotts do
       Gringotts.store(Gringotts.Gateways.XYZ, card, opts)
   """
   def store(gateway, card, opts \\ []) do
-    config = get_and_validate_config(gateway)
-    gateway.store(card, [{:config, config} | opts])
+    gateway.store(card, [{:config, opts[:config]} | opts])
   end
 
   @doc """
