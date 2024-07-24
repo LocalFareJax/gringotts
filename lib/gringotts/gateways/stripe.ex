@@ -342,7 +342,7 @@ defmodule Gringotts.Gateways.Stripe do
 
   defp format_response(response) do
     case response do
-      {:ok, %HTTPoison.Response{body: body}} -> body |> Poison.decode!()
+      {:ok, %HTTPoison.Response{body: body}} -> body |> Jason.decode!()
       _ -> %{"error" => "something went wrong, please try again later"}
     end
   end
