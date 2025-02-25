@@ -108,7 +108,7 @@ defmodule Gringotts.Gateways.AuthorizeNet do
   import XmlBuilder
 
   use Gringotts.Gateways.Base
-  use Gringotts.Adapter, required_config: [:name, :transaction_key]
+  use Gringotts.Adapter
   alias Gringotts.Gateways.AuthorizeNet.ResponseHandler
 
   @test_url "https://apitest.authorize.net/xml/v1/request.api"
