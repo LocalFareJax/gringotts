@@ -170,7 +170,7 @@ defmodule Gringotts do
       {:ok, auth_result} = Gringotts.authorize(Gringotts.Gateways.XYZ, amount, card, opts)
   """
   def authorize(gateway, amount, card, opts \\ []) do
-    config = get_and_validate_config(gateway)
+    config = get_and_validate_config(gateway, opts)
     gateway.authorize(amount, card, [{:config, config} | opts])
   end
 
@@ -191,7 +191,7 @@ defmodule Gringotts do
       Gringotts.capture(Gringotts.Gateways.XYZ, amount, auth_result.id, opts)
   """
   def capture(gateway, id, amount, opts \\ []) do
-    config = get_and_validate_config(gateway)
+    config = get_and_validate_config(gateway, opts)
     gateway.capture(id, amount, [{:config, config} | opts])
   end
 
@@ -224,7 +224,8 @@ defmodule Gringotts do
       Gringotts.purchase(Gringotts.Gateways.XYZ, amount, card, opts)
   """
   def purchase(gateway, amount, card, opts \\ []) do
-    gateway.purchase(amount, card, [{:config, opts[:config]} | opts])
+    config = get_and_validate_config(gateway, opts)
+    gateway.purchase(amount, card, [{:config, config} | opts])
   end
 
   @doc """
@@ -241,7 +242,7 @@ defmodule Gringotts do
       Gringotts.purchase(Gringotts.Gateways.XYZ, amount, id, opts)
   """
   def refund(gateway, amount, id, opts \\ []) do
-    config = get_and_validate_config(gateway)
+    config = get_and_validate_config(gateway, opts)
     gateway.refund(amount, id, [{:config, config} | opts])
   end
 
@@ -269,7 +270,8 @@ defmodule Gringotts do
       Gringotts.store(Gringotts.Gateways.XYZ, card, opts)
   """
   def store(gateway, card, opts \\ []) do
-    gateway.store(card, [{:config, opts[:config]} | opts])
+    config = get_and_validate_config(gateway, opts)
+    gateway.store(card, [{:config, config} | opts])
   end
 
   @doc """
@@ -286,7 +288,7 @@ defmodule Gringotts do
       Gringotts.unstore(Gringotts.Gateways.XYZ, token)
   """
   def unstore(gateway, token, opts \\ []) do
-    config = get_and_validate_config(gateway)
+    config = get_and_validate_config(gateway, opts)
     gateway.unstore(token, [{:config, config} | opts])
   end
 
@@ -307,15 +309,20 @@ defmodule Gringotts do
       Gringotts.void(Gringotts.Gateways.XYZ, id, opts)
   """
   def void(gateway, id, opts \\ []) do
-    config = get_and_validate_config(gateway)
+    config = get_and_validate_config(gateway, opts)
     gateway.void(id, [{:config, config} | opts])
   end
 
-  defp get_and_validate_config(gateway) do
-    config = Application.get_env(:gringotts, gateway)
-    # The following call to validate_config might raise an error
-    gateway.validate_config(config)
+  defp get_and_validate_config(gateway, opts) do
+    config_from_opts = [name: opts[:name], transaction_key: opts[:transaction_key]]
+
     global_config = Application.get_env(:gringotts, :global_config) || [mode: :test]
-    Keyword.merge(global_config, config)
+    merged_config = Keyword.merge(config_from_opts, global_config)
+
+    with merged_config <- Keyword.merge(config_from_opts, global_config),
+         # The following call to validate_config might raise an error
+         :ok <- gateway.validate_config(merged_config) do
+      merged_config
+    end
   end
 end
