@@ -321,8 +321,9 @@ defmodule Gringotts do
 
     with merged_config <- Keyword.merge(config_from_opts, global_config),
          # The following call to validate_config might raise an error
-         IO.inspect(merged_config, label: "merged_config--------------------------------------------------------------")
          :ok <- gateway.validate_config(merged_config) do
+          IO.inspect(merged_config, label: "merged_config--------------------------------------------------------------")
+
       merged_config
     end
   end
