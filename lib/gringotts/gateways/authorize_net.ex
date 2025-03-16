@@ -418,7 +418,6 @@ defmodule Gringotts.Gateways.AuthorizeNet do
 
   # method to make the API request with params
   defp commit(payload, opts) do
-    IO.inspect(base_url(), label: "base_url-------------------------------------------------")
     opts
     |> base_url()
     |> HTTPoison.post(payload, @headers)
