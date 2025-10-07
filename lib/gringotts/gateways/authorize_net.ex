@@ -586,22 +586,25 @@ defmodule Gringotts.Gateways.AuthorizeNet do
     ])
   end
 
-  defp add_refund_transaction_request(amount, id, opts, transaction_type) do
-    element(:transactionRequest, [
-      add_transaction_type(transaction_type),
-      add_amount(amount),
-      element(:payment, [
-        element(:creditCard, [
-          element(:cardNumber, opts[:payment][:card][:number]),
-          element(
-            :expirationDate,
-            join_string([opts[:payment][:card][:year], opts[:payment][:card][:month]], "-")
-          )
-        ])
-      ]),
-      add_ref_trans_id(id)
-    ])
-  end
+defp add_refund_transaction_request(amount, id, opts, transaction_type) do
+  last4 =
+    opts[:payment][:card][:number]
+    |> to_string()
+    |> String.slice(-4, 4)
+
+  element(:transactionRequest, [
+    add_transaction_type(transaction_type),
+    add_amount(amount),
+    element(:payment, [
+      element(:creditCard, [
+        element(:cardNumber, last4),
+        element(:expirationDate, "XXXX")  # ANet requires "XXXX" for refunds
+      ])
+    ]),
+    add_ref_trans_id(id)
+  ])
+end
+
 
   defp add_ref_trans_id(id) do
     element(:refTransId, id)
