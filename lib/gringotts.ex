@@ -292,6 +292,22 @@ defmodule Gringotts do
     gateway.unstore(token, [{:config, config} | opts])
   end
 
+  def unstore_payment_profile(gateway, customer_profile_id, payment_profile_id, opts \\ []) do
+    config = get_and_validate_config(gateway, opts)
+    gateway.unstore_payment_profile(customer_profile_id, payment_profile_id, [{:config, config} | opts])
+  end
+
+  def get_customer_profile_ids(gateway, opts \\ []) do
+    config = get_and_validate_config(gateway, opts)
+
+    gateway.get_customer_profile_ids([{:config, config} | opts])
+  end
+
+  def get_customer_profile(gateway, token, opts \\ []) do
+    config = get_and_validate_config(gateway, opts)
+
+    gateway.get_customer_profile(token, [{:config, config} | opts])
+  end
   @doc """
   Voids the referenced payment.
 

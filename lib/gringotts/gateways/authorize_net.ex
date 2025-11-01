@@ -416,6 +416,53 @@ defmodule Gringotts.Gateways.AuthorizeNet do
     commit(request_data, opts)
   end
 
+  def unstore_payment_profile(customer_profile_id, payment_profile_id, opts) do
+    request_data =
+      delete_customer_payment_profile(customer_profile_id, payment_profile_id, opts)
+      |> generate(format: :none)
+
+    commit(request_data, opts)
+  end
+
+  defp delete_customer_payment_profile(customer_profile_id, payment_profile_id, opts) do
+    element(:deleteCustomerPaymentProfileRequest, %{xmlns: @aut_net_namespace}, [
+      add_merchant_auth(opts[:config]),
+      element(:customerProfileId, customer_profile_id),
+      element(:customerPaymentProfileId, payment_profile_id)
+    ])
+  end
+
+  @spec get_customer_profile_ids(Keyword.t()) :: {:ok | :error, Response.t()}
+  def get_customer_profile_ids(opts) do
+    request_data =
+      build_get_customer_profile_ids_request(opts)
+      |> generate(format: :none)
+
+    commit(request_data, opts)
+  end
+
+  @spec get_customer_profile(String.t(), Keyword.t()) :: {:ok | :error, Response.t()}
+  def get_customer_profile(customer_profile_id, opts) do
+    request_data =
+      build_get_customer_profile_request(customer_profile_id, opts)
+      |> generate(format: :none)
+
+    commit(request_data, opts)
+  end
+
+  defp build_get_customer_profile_ids_request(opts) do
+    element(:getCustomerProfileIdsRequest, %{xmlns: @aut_net_namespace}, [
+      add_merchant_auth(opts[:config])
+    ])
+  end
+
+  defp build_get_customer_profile_request(customer_profile_id, opts) do
+    element(:getCustomerProfileRequest, %{xmlns: @aut_net_namespace}, [
+      add_merchant_auth(opts[:config]),
+      element(:customerProfileId, customer_profile_id)
+    ])
+  end
+
   # method to make the API request with params
   defp commit(payload, opts) do
     opts
@@ -770,7 +817,10 @@ end
       "ErrorResponse",
       "createCustomerProfileResponse",
       "createCustomerPaymentProfileResponse",
-      "deleteCustomerProfileResponse"
+      "deleteCustomerProfileResponse",
+      "deleteCustomerPaymentProfileResponse",
+      "getCustomerProfileIdsResponse",
+      "getCustomerProfileResponse"
     ]
 
     @avs_code_translator %{
@@ -868,6 +918,27 @@ end
 
     defp build_response(%{"messages" => %{"resultCode" => "Ok"}, "transactionResponse" => %{"errors" => _}} = result, base_response) do
       {:error, ResponseHandler.parse_gateway_error(result, base_response)}
+    end
+
+    defp build_response(%{"messages" => %{"resultCode" => "Ok"}} = result, base_response)
+        when is_map_key(result, "profile") or is_map_key(result, "ids") do
+      message = get_in(result, ["messages", "message", "text"])
+      gateway_code = get_in(result, ["messages", "message", "code"])
+
+      {:ok,
+       base_response
+       |> set_message(message)
+       |> set_gateway_code(gateway_code)}
+    end
+
+    defp build_response(%{"deleteCustomerPaymentProfileResponse" => %{"messages" => %{"resultCode" => "Ok"} = msg}} = result, base_response) do
+      message = get_in(msg, ["message", "text"])
+      gateway_code = get_in(msg, ["message", "code"])
+
+      {:ok,
+       base_response
+       |> set_message(message)
+       |> set_gateway_code(gateway_code)}
     end
 
     defp build_response(%{"messages" => %{"resultCode" => "Ok"}} = result, base_response) do
